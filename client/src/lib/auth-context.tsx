@@ -19,16 +19,15 @@ type AuthContextType = {
   registerMutation: UseMutationResult<User, Error, InsertUser>;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | undefined, Error>({
+  } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
@@ -41,14 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.username}!`,
+        title: "Welcome back!",
+        description: `You're now signed in as ${user.username}.`,
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Incorrect username or password.",
         variant: "destructive",
       });
     },
@@ -62,14 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Registration successful",
-        description: "Your account has been created",
+        title: "Account created!",
+        description: "Your account has been successfully created.",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: error.message || "Unable to create account.",
         variant: "destructive",
       });
     },
@@ -82,30 +81,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
+        title: "Signed out",
+        description: "You have been signed out successfully.",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Logout failed",
-        description: error.message,
+        description: error.message || "Unable to sign out.",
         variant: "destructive",
       });
     },
   });
 
-  const value = {
-    user: user ?? null,
-    isLoading,
-    error,
-    loginMutation,
-    logoutMutation,
-    registerMutation
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user: user || null,
+        isLoading,
+        error,
+        loginMutation,
+        logoutMutation,
+        registerMutation,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

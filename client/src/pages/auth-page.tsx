@@ -206,9 +206,13 @@ export default function AuthPage() {
                   <CardFooter className="flex justify-center">
                     <div className="text-sm text-gray-500">
                       Don't have an account?{" "}
-                      <TabsTrigger value="register" className="underline text-primary p-0 h-auto">
+                      <button 
+                        type="button" 
+                        className="underline text-primary p-0 h-auto"
+                        onClick={() => document.querySelector('[value="register"]')?.dispatchEvent(new MouseEvent('click'))}
+                      >
                         Create one
-                      </TabsTrigger>
+                      </button>
                     </div>
                   </CardFooter>
                 </Card>
