@@ -3,8 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { newsService } from "./services/news-service";
 import { aiService } from "./services/ai-service";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication
+  setupAuth(app);
+
   // API Routes
   
   // Topics
@@ -109,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Newsletter subscription
+  // Newsletter subscription - keeping this separate from the auth flow for simplicity
   app.post("/api/subscribe", async (req, res) => {
     try {
       const { email } = req.body;

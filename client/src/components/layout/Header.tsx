@@ -1,11 +1,36 @@
 import { useState } from "react";
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllTopics } from "@/lib/news-api";
+import { useAuth } from "@/lib/auth-context";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isHomePage] = useRoute("/");
+  const [, navigate] = useLocation();
+  const { user, logoutMutation } = useAuth();
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        navigate("/auth");
+      }
+    });
+  };
+
+  const getInitials = (name: string) => {
+    return name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -37,10 +62,46 @@ export function Header() {
               Alerts
             </button>
             
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-              <i className="fas fa-user-circle mr-2"></i>
-              Sign In
-            </button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary text-white">
+                        {getInitials(user.username)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel className="font-normal text-xs text-gray-500">
+                    Signed in as {user.email}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Link href="/profile" className="w-full">Profile Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/my-topics" className="w-full">My Topics</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/saved-articles" className="w-full">Saved Articles</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <span className="text-red-600">Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/auth">
+                <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                  <i className="fas fa-user-circle mr-2"></i>
+                  Sign In
+                </button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

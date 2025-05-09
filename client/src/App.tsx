@@ -6,14 +6,18 @@ import Home from "@/pages/home";
 import Topic from "@/pages/topic";
 import ConflictView from "@/pages/conflict-view";
 import Timeline from "@/pages/timeline";
+import AuthPage from "@/pages/auth-page";
+import { AuthProvider } from "@/lib/auth-context";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/topic/:slug" component={Topic} />
-      <Route path="/conflict-view/:id" component={ConflictView} />
-      <Route path="/timeline/:id" component={Timeline} />
+      <ProtectedRoute path="/" component={Home} />
+      <ProtectedRoute path="/topic/:slug" component={Topic} />
+      <ProtectedRoute path="/conflict-view/:id" component={ConflictView} />
+      <ProtectedRoute path="/timeline/:id" component={Timeline} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -21,10 +25,12 @@ function Router() {
 
 function App() {
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Router />
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
+    </AuthProvider>
   );
 }
 
