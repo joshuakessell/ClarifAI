@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { seedTopics } from "./seed";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +38,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // If we're using a database, seed it with default data
+  if (process.env.DATABASE_URL) {
+    try {
+      await seedTopics();
+    } catch (error) {
+      console.error("Error seeding database:", error);
+    }
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
