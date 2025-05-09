@@ -1,0 +1,126 @@
+Objective:
+Build a web app that delivers factually verified, bias-neutral news updates—both daily and real-time—on user-selected topics. It will compare and contrast conflicting viewpoints, verify facts across both traditional and social media, and deliver clear, concise summaries with rich context and timelines.
+
+Features:
+Core Functionalities:
+
+News Aggregation Engine:
+
+Fetches news from RSS feeds, APIs from verified social media accounts (X, Facebook, Bluesky), and professional news organizations.
+
+AI-Powered Bias Filtering & Rewriting:
+
+Rewrites content neutrally using AI, stripping known biases.
+
+Highlights misinformation or spin from both sides.
+
+Real-time Breaking News Alerts:
+
+Push notifications triggered by verified breaking events.
+
+Daily Digests:
+
+Scheduled user-defined delivery of daily summaries.
+
+Additional Features:
+
+Conflict Viewer:
+
+Side-by-side presentation of differing narratives with annotated sources.
+
+Topic Subscription:
+
+Users can follow ongoing issues or broad topics for continued coverage.
+
+Contextual Timeline Builder:
+
+Generates chronological views of events from multiple sources.
+
+Technology Integration:
+
+Use Supabase for:
+
+User authentication.
+
+Real-time news storage and user preferences.
+
+Integrate AI APIs (e.g., OpenAI or Claude) for:
+
+Rewriting, summarization, and bias detection.
+
+Use web scrapers and RSS tools for:
+
+Gathering and parsing news content.
+
+PWA-capable frontend with push notification support.
+
+Workflow and Data Organization:
+
+Modular project structure:
+
+css
+Copy
+Edit
+src/
+├── components/
+│   ├── feed/
+│   ├── topics/
+│   ├── alerts/
+│   ├── summary/
+│   ├── conflictView/
+├── hooks/
+├── models/
+├── utils/
+├── services/
+│   ├── newsIngestion/
+│   ├── sourceClassifier/
+│   ├── AIRewrite/
+└── config/
+Development Workflow:
+Project Setup:
+
+Initialize with Vite and Tailwind CSS.
+
+Install dependencies:
+
+bash
+Copy
+Edit
+npm create vite@latest unbiased-news -- --template react
+cd unbiased-news
+npm install axios rss-parser react-toastify @headlessui/react clsx react-hot-toast
+npx tailwindcss init -p
+Modular Implementation:
+
+Build foundational components: Card, Feed, ConflictView.
+
+Implement modules in this order:
+
+News ingestion + AI rewriting.
+
+Feed UI.
+
+Daily digest scheduler.
+
+Real-time alert system.
+
+Conflict analyzer module.
+
+Testing:
+
+Use Jest for logic testing and Cypress for end-to-end UI validation.
+
+Deployment:
+
+Enable lazy loading for performance.
+
+Deploy to Vercel or Netlify.
+
+Configure PWA for mobile compatibility and push alerts.
+
+Success Metrics:
+Accuracy: All summaries verified against 3+ reputable sources.
+
+Engagement: Users average 3 followed topics.
+
+Performance: Sub-second load for daily feed and alerts.
