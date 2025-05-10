@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit answers to follow-up questions
-  app.post("/api/research-followups/:id/answer", isAuthenticated, async (req, res) => {
+  app.patch("/api/research-followup-questions/:id", isAuthenticated, async (req, res) => {
     try {
       const { answer } = req.body;
       if (!answer) {
