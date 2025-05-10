@@ -81,7 +81,7 @@ export class NewsService {
     }
   }
 
-  private async fetchNewsForTopic(topic: string): Promise<any[]> {
+  async fetchNewsForTopic(topic: string): Promise<any[]> {
     // For demo purposes, we'll return mock data
     // In a real implementation, this would call the NewsAPI or MediaStack API
     
@@ -114,7 +114,7 @@ export class NewsService {
     return this.getMockNewsForTopic(topic);
   }
 
-  private getMockNewsForTopic(topic: string): any[] {
+  getMockNewsForTopic(topic: string): any[] {
     const mockTopics = [
       {
         name: "Politics",
