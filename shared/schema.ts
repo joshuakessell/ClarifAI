@@ -132,3 +132,56 @@ export type InsertTimelineEvent = z.infer<typeof insertTimelineEventSchema>;
 
 export type AlertSetting = typeof alertSettings.$inferSelect;
 export type InsertAlertSetting = z.infer<typeof insertAlertSettingsSchema>;
+
+// Deep Research schemas
+export const researchRequests = pgTable("research_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  url: text("url").notNull(),
+  title: text("title"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertResearchRequestSchema = createInsertSchema(researchRequests).omit({
+  id: true,
+  completedAt: true,
+});
+
+export const researchFollowupQuestions = pgTable("research_followup_questions", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").notNull().references(() => researchRequests.id),
+  question: text("question").notNull(),
+  answer: text("answer"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertResearchFollowupQuestionSchema = createInsertSchema(researchFollowupQuestions).omit({
+  id: true,
+});
+
+export const researchResults = pgTable("research_results", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").notNull().references(() => researchRequests.id),
+  summary: text("summary").notNull(),
+  leftPerspective: text("left_perspective").notNull(),
+  centerPerspective: text("center_perspective").notNull(),
+  rightPerspective: text("right_perspective").notNull(),
+  factualAccuracy: integer("factual_accuracy").notNull(),
+  sources: text("sources").array(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertResearchResultSchema = createInsertSchema(researchResults).omit({
+  id: true,
+});
+
+export type ResearchRequest = typeof researchRequests.$inferSelect;
+export type InsertResearchRequest = z.infer<typeof insertResearchRequestSchema>;
+
+export type ResearchFollowupQuestion = typeof researchFollowupQuestions.$inferSelect;
+export type InsertResearchFollowupQuestion = z.infer<typeof insertResearchFollowupQuestionSchema>;
+
+export type ResearchResult = typeof researchResults.$inferSelect;
+export type InsertResearchResult = z.infer<typeof insertResearchResultSchema>;

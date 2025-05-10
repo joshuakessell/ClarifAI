@@ -5,7 +5,10 @@ import {
   newsArticles, NewsArticle, InsertNewsArticle,
   newsAnalysis, NewsAnalysis, InsertNewsAnalysis,
   timelineEvents, TimelineEvent, InsertTimelineEvent,
-  alertSettings, AlertSetting, InsertAlertSetting
+  alertSettings, AlertSetting, InsertAlertSetting,
+  researchRequests, ResearchRequest, InsertResearchRequest,
+  researchFollowupQuestions, ResearchFollowupQuestion, InsertResearchFollowupQuestion,
+  researchResults, ResearchResult, InsertResearchResult
 } from "@shared/schema";
 
 export interface IStorage {
@@ -48,6 +51,20 @@ export interface IStorage {
   // Alert Settings methods
   getAlertSettings(userId: number): Promise<AlertSetting[]>;
   updateAlertSettings(id: number, settings: Partial<InsertAlertSetting>): Promise<AlertSetting | undefined>;
+  
+  // Deep Research methods
+  createResearchRequest(request: InsertResearchRequest): Promise<ResearchRequest>;
+  getResearchRequests(userId: number): Promise<ResearchRequest[]>;
+  getResearchRequestById(id: number): Promise<ResearchRequest | undefined>;
+  updateResearchRequest(id: number, request: Partial<ResearchRequest>): Promise<ResearchRequest | undefined>;
+  
+  // Research Followup Question methods
+  getResearchFollowupQuestions(requestId: number): Promise<ResearchFollowupQuestion[]>;
+  updateResearchFollowupQuestion(id: number, answer: string): Promise<ResearchFollowupQuestion | undefined>;
+  
+  // Research Results methods
+  getResearchResultByRequestId(requestId: number): Promise<ResearchResult | undefined>;
+  createResearchResult(result: InsertResearchResult): Promise<ResearchResult>;
 }
 
 export class MemStorage implements IStorage {
