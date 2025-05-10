@@ -100,7 +100,7 @@ export default function AuthPage() {
         // After successful registration, add selected topics
         if (user && data.topics.length > 0) {
           try {
-            // Add user topics (in a real app, this would be done server-side)
+            // Add user topics
             for (const topicId of data.topics) {
               await fetch('/api/user-topics', {
                 method: 'POST',
@@ -112,7 +112,7 @@ export default function AuthPage() {
             console.error('Error adding user topics:', error);
           }
         }
-        navigate("/");
+        // Navigation is handled in the auth context
       },
     });
   };
