@@ -88,6 +88,9 @@ export function Header() {
                   <DropdownMenuItem>
                     <Link href="/saved-articles" className="w-full">Saved Articles</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/research" className="w-full">Deep Research</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <span className="text-red-600">Sign Out</span>

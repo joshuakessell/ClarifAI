@@ -7,6 +7,8 @@ import Topic from "@/pages/topic";
 import ConflictView from "@/pages/conflict-view";
 import Timeline from "@/pages/timeline";
 import AuthPage from "@/pages/auth-page";
+import ResearchDashboard from "@/pages/research-dashboard";
+import ResearchDetails from "@/pages/research-details";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
 
@@ -17,6 +19,8 @@ function Router() {
       <ProtectedRoute path="/topic/:slug" component={Topic} />
       <ProtectedRoute path="/conflict-view/:id" component={ConflictView} />
       <ProtectedRoute path="/timeline/:id" component={Timeline} />
+      <ProtectedRoute path="/research" component={ResearchDashboard} />
+      <ProtectedRoute path="/research/:id" component={ResearchDetails} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
