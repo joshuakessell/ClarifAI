@@ -16,30 +16,30 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Platform</h3>
             <ul className="space-y-3">
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">How it works</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Our methodology</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Source verification</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Bias detection</Link></li>
+              <li><Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it works</Link></li>
+              <li><Link href="/methodology" className="text-gray-600 hover:text-gray-900">Our methodology</Link></li>
+              <li><Link href="/source-verification" className="text-gray-600 hover:text-gray-900">Source verification</Link></li>
+              <li><Link href="/bias-detection" className="text-gray-600 hover:text-gray-900">Bias detection</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Company</h3>
             <ul className="space-y-3">
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">About us</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Team</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Press</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Contact</Link></li>
+              <li><Link href="/about-us" className="text-gray-600 hover:text-gray-900">About us</Link></li>
+              <li><Link href="/team" className="text-gray-600 hover:text-gray-900">Team</Link></li>
+              <li><Link href="/press" className="text-gray-600 hover:text-gray-900">Press</Link></li>
+              <li><Link href="/contact" className="text-gray-600 hover:text-gray-900">Contact</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Legal</h3>
             <ul className="space-y-3">
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Privacy Policy</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Terms of Service</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">Cookie Policy</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-gray-900">GDPR Compliance</Link></li>
+              <li><Link href="/privacy-policy" className="text-gray-600 hover:text-gray-900">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="text-gray-600 hover:text-gray-900">Terms of Service</Link></li>
+              <li><Link href="/cookie-policy" className="text-gray-600 hover:text-gray-900">Cookie Policy</Link></li>
+              <li><Link href="/gdpr-compliance" className="text-gray-600 hover:text-gray-900">GDPR Compliance</Link></li>
             </ul>
           </div>
         </div>
