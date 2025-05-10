@@ -84,7 +84,14 @@ export class MemStorage implements IStorage {
     newsAnalysis: number;
     timelineEvents: number;
     alertSettings: number;
+    researchRequests: number;
+    researchFollowupQuestions: number;
+    researchResults: number;
   };
+
+  private researchRequests: Map<number, ResearchRequest>;
+  private researchFollowupQuestions: Map<number, ResearchFollowupQuestion>;
+  private researchResults: Map<number, ResearchResult>;
 
   constructor() {
     this.users = new Map();
@@ -94,6 +101,9 @@ export class MemStorage implements IStorage {
     this.newsAnalysis = new Map();
     this.timelineEvents = new Map();
     this.alertSettings = new Map();
+    this.researchRequests = new Map();
+    this.researchFollowupQuestions = new Map();
+    this.researchResults = new Map();
     
     this.currentIds = {
       users: 1,
@@ -102,7 +112,10 @@ export class MemStorage implements IStorage {
       newsArticles: 1,
       newsAnalysis: 1,
       timelineEvents: 1,
-      alertSettings: 1
+      alertSettings: 1,
+      researchRequests: 1,
+      researchFollowupQuestions: 1,
+      researchResults: 1
     };
     
     // Initialize with some default topics
@@ -307,6 +320,71 @@ export class MemStorage implements IStorage {
     this.alertSettings.set(id, updatedSettings);
     
     return updatedSettings;
+  }
+
+  // Deep Research methods
+  async createResearchRequest(request: InsertResearchRequest): Promise<ResearchRequest> {
+    const id = this.currentIds.researchRequests++;
+    const researchRequest: ResearchRequest = { ...request, id, createdAt: new Date(), completedAt: null };
+    this.researchRequests.set(id, researchRequest);
+    return researchRequest;
+  }
+
+  async getResearchRequests(userId: number): Promise<ResearchRequest[]> {
+    return Array.from(this.researchRequests.values())
+      .filter(request => request.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getResearchRequestById(id: number): Promise<ResearchRequest | undefined> {
+    return this.researchRequests.get(id);
+  }
+
+  async updateResearchRequest(id: number, requestUpdate: Partial<ResearchRequest>): Promise<ResearchRequest | undefined> {
+    const request = this.researchRequests.get(id);
+    
+    if (!request) {
+      return undefined;
+    }
+    
+    const updatedRequest = { ...request, ...requestUpdate };
+    this.researchRequests.set(id, updatedRequest);
+    
+    return updatedRequest;
+  }
+
+  // Research Followup Question methods
+  async getResearchFollowupQuestions(requestId: number): Promise<ResearchFollowupQuestion[]> {
+    return Array.from(this.researchFollowupQuestions.values())
+      .filter(question => question.requestId === requestId)
+      .sort((a, b) => a.id - b.id);
+  }
+
+  async updateResearchFollowupQuestion(id: number, answer: string): Promise<ResearchFollowupQuestion | undefined> {
+    const question = this.researchFollowupQuestions.get(id);
+    
+    if (!question) {
+      return undefined;
+    }
+    
+    const updatedQuestion = { ...question, answer };
+    this.researchFollowupQuestions.set(id, updatedQuestion);
+    
+    return updatedQuestion;
+  }
+
+  // Research Results methods
+  async getResearchResultByRequestId(requestId: number): Promise<ResearchResult | undefined> {
+    return Array.from(this.researchResults.values()).find(
+      result => result.requestId === requestId
+    );
+  }
+
+  async createResearchResult(result: InsertResearchResult): Promise<ResearchResult> {
+    const id = this.currentIds.researchResults++;
+    const researchResult: ResearchResult = { ...result, id, createdAt: new Date() };
+    this.researchResults.set(id, researchResult);
+    return researchResult;
   }
 }
 

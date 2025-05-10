@@ -9,7 +9,10 @@ import {
   newsArticles, NewsArticle, InsertNewsArticle,
   newsAnalysis, NewsAnalysis, InsertNewsAnalysis,
   timelineEvents, TimelineEvent, InsertTimelineEvent,
-  alertSettings, AlertSetting, InsertAlertSetting
+  alertSettings, AlertSetting, InsertAlertSetting,
+  researchRequests, ResearchRequest, InsertResearchRequest,
+  researchFollowupQuestions, ResearchFollowupQuestion, InsertResearchFollowupQuestion,
+  researchResults, ResearchResult, InsertResearchResult
 } from "@shared/schema";
 
 import { IStorage } from './storage';
@@ -211,5 +214,72 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedSettings;
+  }
+
+  // Deep Research methods
+  async createResearchRequest(request: InsertResearchRequest): Promise<ResearchRequest> {
+    const [createdRequest] = await db.insert(researchRequests).values(request).returning();
+    return createdRequest;
+  }
+
+  async getResearchRequests(userId: number): Promise<ResearchRequest[]> {
+    return db
+      .select()
+      .from(researchRequests)
+      .where(eq(researchRequests.userId, userId))
+      .orderBy(desc(researchRequests.createdAt));
+  }
+
+  async getResearchRequestById(id: number): Promise<ResearchRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(researchRequests)
+      .where(eq(researchRequests.id, id));
+    
+    return request;
+  }
+
+  async updateResearchRequest(id: number, requestUpdate: Partial<ResearchRequest>): Promise<ResearchRequest | undefined> {
+    const [updatedRequest] = await db
+      .update(researchRequests)
+      .set(requestUpdate)
+      .where(eq(researchRequests.id, id))
+      .returning();
+    
+    return updatedRequest;
+  }
+
+  // Research Followup Question methods
+  async getResearchFollowupQuestions(requestId: number): Promise<ResearchFollowupQuestion[]> {
+    return db
+      .select()
+      .from(researchFollowupQuestions)
+      .where(eq(researchFollowupQuestions.requestId, requestId))
+      .orderBy(asc(researchFollowupQuestions.id));
+  }
+
+  async updateResearchFollowupQuestion(id: number, answer: string): Promise<ResearchFollowupQuestion | undefined> {
+    const [updatedQuestion] = await db
+      .update(researchFollowupQuestions)
+      .set({ answer })
+      .where(eq(researchFollowupQuestions.id, id))
+      .returning();
+    
+    return updatedQuestion;
+  }
+
+  // Research Results methods
+  async getResearchResultByRequestId(requestId: number): Promise<ResearchResult | undefined> {
+    const [result] = await db
+      .select()
+      .from(researchResults)
+      .where(eq(researchResults.requestId, requestId));
+    
+    return result;
+  }
+
+  async createResearchResult(result: InsertResearchResult): Promise<ResearchResult> {
+    const [createdResult] = await db.insert(researchResults).values(result).returning();
+    return createdResult;
   }
 }

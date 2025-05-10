@@ -1,9 +1,10 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { newsService } from "./services/news-service";
 import { aiService } from "./services/ai-service";
 import { setupAuth } from "./auth";
+import { deepResearchService } from "./services/deep-research-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
@@ -141,6 +142,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({ message: "Subscribed successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to subscribe" });
+    }
+  });
+
+  // Deep Research routes
+  // Authentication middleware for deep research routes
+  const isAuthenticated = (req: Request, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    next();
+  };
+
+  // Create a new research request
+  app.post("/api/research-requests", isAuthenticated, async (req, res) => {
+    try {
+      const { url, title } = req.body;
+      if (!url) {
+        return res.status(400).json({ message: "URL is required" });
+      }
+
+      // Create research request with authenticated user ID
+      const request = await storage.createResearchRequest({
+        userId: req.user!.id,
+        url,
+        title: title || null,
+        status: "pending"
+      });
+
+      // Check if we need follow-up questions
+      const { title: extractedTitle, content } = await deepResearchService.extractContentFromUrl(url);
+      
+      // Update title if not provided
+      if (!title && extractedTitle) {
+        await storage.updateResearchRequest(request.id, { title: extractedTitle });
+        request.title = extractedTitle;
+      }
+
+      // Determine if we need follow-up questions
+      const followupQuestions = await deepResearchService.determineFollowupQuestions(content, request.id);
+
+      // Return request with follow-up questions
+      res.status(201).json({ 
+        request, 
+        followupQuestions,
+        estimatedTime: deepResearchService.estimateCompletionTime()
+      });
+    } catch (error) {
+      console.error("Error creating research request:", error);
+      res.status(500).json({ message: "Failed to create research request" });
+    }
+  });
+
+  // Get all research requests for the authenticated user
+  app.get("/api/research-requests", isAuthenticated, async (req, res) => {
+    try {
+      const requests = await storage.getResearchRequests(req.user!.id);
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch research requests" });
+    }
+  });
+
+  // Get a specific research request by ID
+  app.get("/api/research-requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getResearchRequestById(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Research request not found" });
+      }
+      
+      // Check if user owns this request
+      if (request.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to view this research request" });
+      }
+      
+      // Get follow-up questions if available
+      const followupQuestions = await storage.getResearchFollowupQuestions(requestId);
+      
+      // Get research result if available
+      const researchResult = await storage.getResearchResultByRequestId(requestId);
+      
+      res.json({ request, followupQuestions, researchResult });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch research request" });
+    }
+  });
+
+  // Submit answers to follow-up questions
+  app.post("/api/research-followups/:id/answer", isAuthenticated, async (req, res) => {
+    try {
+      const { answer } = req.body;
+      if (!answer) {
+        return res.status(400).json({ message: "Answer is required" });
+      }
+      
+      const questionId = parseInt(req.params.id);
+      const updatedQuestion = await storage.updateResearchFollowupQuestion(questionId, answer);
+      
+      if (!updatedQuestion) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      
+      res.json(updatedQuestion);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to submit answer" });
+    }
+  });
+
+  // Start the deep research process
+  app.post("/api/research-requests/:id/start", isAuthenticated, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getResearchRequestById(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Research request not found" });
+      }
+      
+      // Check if user owns this request
+      if (request.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to start this research" });
+      }
+      
+      // Get follow-up questions and answers
+      const followupQuestions = await storage.getResearchFollowupQuestions(requestId);
+      
+      // Start the research in the background
+      const estimatedTime = deepResearchService.estimateCompletionTime();
+      
+      // Perform research asynchronously
+      (async () => {
+        try {
+          const result = await deepResearchService.conductResearch(request, followupQuestions);
+          console.log(`Research completed for request ${requestId}`);
+        } catch (error) {
+          console.error(`Research failed for request ${requestId}:`, error);
+          // Update request status to failed
+          await storage.updateResearchRequest(requestId, { status: "failed" });
+        }
+      })();
+      
+      // Update request status to in-progress
+      await storage.updateResearchRequest(requestId, { status: "in-progress" });
+      
+      res.json({ 
+        message: "Research started", 
+        estimatedTimeSeconds: estimatedTime 
+      });
+    } catch (error) {
+      console.error("Error starting research:", error);
+      res.status(500).json({ message: "Failed to start research" });
     }
   });
 
