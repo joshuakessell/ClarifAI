@@ -9,7 +9,7 @@ interface NewsFeedProps {
   topicSlug?: string;
 }
 
-export function NewsFeed({ topicSlug }: NewsFeedProps) {
+export function NewsFeed({ topicSlug }: NewsFeedProps = {}) {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<'recent' | 'relevant'>('recent');
   const ITEMS_PER_PAGE = 6;

@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `You're now signed in as ${user.username}.`,
       });
       // Navigate to the home page after successful login
-      setTimeout(() => navigate("/"), 500);
+      navigate("/");
     },
     onError: (error: Error) => {
       toast({
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Your account has been successfully created.",
       });
       // Navigate to the home page after successful registration
-      setTimeout(() => navigate("/"), 500);
+      navigate("/");
     },
     onError: (error: Error) => {
       toast({
