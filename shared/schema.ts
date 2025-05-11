@@ -13,9 +13,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User table definition for Replit Auth
+// User table definition with local authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
+  username: varchar("username", { length: 50 }).unique(),
+  password: varchar("password", { length: 255 }),
   email: varchar("email", { length: 100 }).unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
@@ -24,7 +26,14 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export type UpsertUser = typeof users.$inferInsert;
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 
 // Topic table definition
 export const topics = pgTable("topics", {

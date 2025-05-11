@@ -1,8 +1,10 @@
 import { db } from './db';
-import { InsertTopic, InsertNewsArticle, topics, newsArticles } from '@shared/schema';
+import { InsertTopic, InsertNewsArticle, InsertUser, topics, newsArticles, users } from '@shared/schema';
 import { storage } from './storage';
 import { newsService } from './services/news-service';
 import { eq } from 'drizzle-orm';
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
 
 // Default topics to seed the database with
 const defaultTopics: InsertTopic[] = [
@@ -31,6 +33,40 @@ export async function seedTopics() {
     }
   } else {
     console.log(`Found ${existingTopics.length} existing topics. Skipping seed.`);
+  }
+}
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+export async function seedTestUser() {
+  console.log("Checking for test user...");
+  const existingUser = await db.select().from(users).where(eq(users.username, "testuser"));
+  
+  if (existingUser.length === 0) {
+    console.log("No test user found. Creating a test user...");
+    
+    try {
+      const hashedPassword = await hashPassword("password123");
+      
+      const newUser: InsertUser = {
+        username: "testuser",
+        email: "test@example.com",
+        password: hashedPassword
+      };
+      
+      await db.insert(users).values(newUser);
+      console.log("Successfully created test user. Username: testuser, Password: password123");
+    } catch (error) {
+      console.error("Error creating test user:", error);
+    }
+  } else {
+    console.log("Test user already exists. Skipping creation.");
   }
 }
 
