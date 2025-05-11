@@ -1,6 +1,6 @@
 import { IStorage } from './storage';
 import {
-  users, User, UpsertUser,
+  users, User, InsertUser,
   topics, Topic, InsertTopic,
   userTopics, UserTopic, InsertUserTopic,
   newsArticles, NewsArticle, InsertNewsArticle,
@@ -29,8 +29,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User methods
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+  async getUser(id: string | number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id.toString()));
     return user;
   }
 
@@ -38,24 +38,19 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    // For PostgreSQL, use on conflict for upsert
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values({
         ...userData,
+        createdAt: new Date(),
         updatedAt: new Date()
-      })
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          email: userData.email,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          profileImageUrl: userData.profileImageUrl,
-          updatedAt: new Date()
-        }
       })
       .returning();
     

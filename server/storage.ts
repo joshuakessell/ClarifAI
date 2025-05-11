@@ -1,5 +1,5 @@
 import {
-  users, User, UpsertUser,
+  users, User, InsertUser,
   topics, Topic, InsertTopic,
   userTopics, UserTopic, InsertUserTopic,
   newsArticles, NewsArticle, InsertNewsArticle,
@@ -14,9 +14,10 @@ import {
 
 export interface IStorage {
   // User methods
-  getUser(id: string): Promise<User | undefined>;
+  getUser(id: string | number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  upsertUser(userData: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(userData: InsertUser): Promise<User>;
   
   // Topic methods
   getAllTopics(): Promise<Topic[]>;
@@ -78,6 +79,7 @@ export class MemStorage implements IStorage {
   sessionStore: any;
   
   private currentIds: {
+    users: number;
     topics: number;
     userTopics: number;
     newsArticles: number;
@@ -112,6 +114,7 @@ export class MemStorage implements IStorage {
     });
     
     this.currentIds = {
+      users: 1,
       topics: 1,
       userTopics: 1,
       newsArticles: 1,
@@ -143,8 +146,8 @@ export class MemStorage implements IStorage {
   }
 
   // User methods
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getUser(id: string | number): Promise<User | undefined> {
+    return this.users.get(id.toString());
   }
   
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -152,32 +155,32 @@ export class MemStorage implements IStorage {
       (user) => user.email === email
     );
   }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username
+    );
+  }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const { id } = userData;
+  async createUser(userData: InsertUser): Promise<User> {
+    // Generate a unique ID (number converted to string)
+    const id = (this.currentIds.users++).toString();
     
-    // Check if user already exists
-    const existingUser = await this.getUser(id);
+    // Create new user
+    const newUser: User = {
+      id,
+      username: userData.username,
+      password: userData.password,
+      email: userData.email ?? null,
+      firstName: userData.firstName ?? null,
+      lastName: userData.lastName ?? null,
+      profileImageUrl: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
     
-    if (existingUser) {
-      // Update existing user
-      const updatedUser: User = {
-        ...existingUser,
-        ...userData,
-        updatedAt: new Date()
-      };
-      this.users.set(id, updatedUser);
-      return updatedUser;
-    } else {
-      // Create new user
-      const newUser: User = {
-        ...userData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      this.users.set(id, newUser);
-      return newUser;
-    }
+    this.users.set(id, newUser);
+    return newUser;
   }
   
   // Topic methods

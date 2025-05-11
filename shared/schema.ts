@@ -33,7 +33,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
 
 // Topic table definition
 export const topics = pgTable("topics", {
@@ -131,8 +130,6 @@ export const insertAlertSettingsSchema = createInsertSchema(alertSettings).omit(
 });
 
 // Type definitions
-export type User = typeof users.$inferSelect;
-
 export type Topic = typeof topics.$inferSelect;
 export type InsertTopic = z.infer<typeof insertTopicSchema>;
 
@@ -203,3 +200,6 @@ export type InsertResearchFollowupQuestion = z.infer<typeof insertResearchFollow
 
 export type ResearchResult = typeof researchResults.$inferSelect;
 export type InsertResearchResult = z.infer<typeof insertResearchResultSchema>;
+
+// User type definition
+export type User = typeof users.$inferSelect;
