@@ -9,6 +9,7 @@ import { User as SelectUser } from "@shared/schema";
 import MemoryStore from "memorystore";
 import { ValidationError, AuthenticationError, ConflictError } from './errors';
 import { z } from 'zod';
+import { requireAuth, validateRequest } from './middleware';
 
 declare global {
   namespace Express {
@@ -18,7 +19,7 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-// Validation schemas
+// Validation schemas for authentication
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
@@ -28,31 +29,10 @@ const registerSchema = loginSchema.extend({
   email: z.string().email("Invalid email address"),
 });
 
-// Validation middleware
-function validateRequest(schema: z.ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    try {
-      schema.parse(req.body);
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errors: Record<string, string[]> = {};
-        
-        error.errors.forEach((err) => {
-          const path = err.path.join('.');
-          if (!errors[path]) {
-            errors[path] = [];
-          }
-          errors[path].push(err.message);
-        });
-        
-        next(new ValidationError("Validation failed", errors));
-      } else {
-        next(error);
-      }
-    }
-  };
-}
+// Schema for user topics
+const userTopicSchema = z.object({
+  topicId: z.number().or(z.string().regex(/^\d+$/).transform(Number)),
+});
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -153,43 +133,65 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  app.post("/api/login", validateRequest(loginSchema), (req, res, next) => {
     passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Authentication failed" });
+      if (!user) return next(new AuthenticationError(info?.message || "Invalid username or password"));
       
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(200).json(user);
+        
+        // Return user without password
+        const { password, ...userWithoutPassword } = user;
+        res.status(200).json(userWithoutPassword);
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
+    try {
+      if (!req.isAuthenticated()) {
+        return next(new AuthenticationError("You are not logged in"));
+      }
+      
+      req.logout((err) => {
+        if (err) return next(err);
+        res.status(200).json({ message: "Logged out successfully" });
+      });
+    } catch (error) {
+      next(error);
+    }
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
-    res.json(req.user);
+  app.get("/api/user", (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return next(new AuthenticationError("Not authenticated"));
+      }
+      
+      // Return user without password
+      const { password, ...userWithoutPassword } = req.user as Express.User;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      next(error);
+    }
   });
 
   // API for adding user topics
-  app.post("/api/user-topics", async (req, res, next) => {
+  app.post("/api/user-topics", requireAuth, validateRequest(userTopicSchema), async (req, res, next) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
       const { topicId } = req.body;
       const userId = req.user!.id;
+      
+      // Check if the topic exists
+      const topic = await storage.getTopicById(Number(topicId));
+      if (!topic) {
+        throw new ValidationError("Invalid topic", { topicId: ["Topic does not exist"] });
+      }
 
       const userTopic = await storage.addUserTopic({
         userId,
-        topicId
+        topicId: Number(topicId)
       });
 
       res.status(201).json(userTopic);
@@ -199,29 +201,31 @@ export function setupAuth(app: Express) {
   });
 
   // API for removing user topics
-  app.delete("/api/user-topics/:topicId", async (req, res, next) => {
+  app.delete("/api/user-topics/:topicId", requireAuth, async (req, res, next) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
       const userId = req.user!.id;
       const topicId = parseInt(req.params.topicId, 10);
+      
+      if (isNaN(topicId)) {
+        throw new ValidationError("Invalid topic ID", { topicId: ["Topic ID must be a number"] });
+      }
+
+      // Check if the topic exists
+      const topic = await storage.getTopicById(topicId);
+      if (!topic) {
+        throw new ValidationError("Invalid topic", { topicId: ["Topic does not exist"] });
+      }
 
       await storage.removeUserTopic(userId, topicId);
-      res.sendStatus(204);
+      res.status(200).json({ message: "Topic removed successfully" });
     } catch (error) {
       next(error);
     }
   });
 
   // Get user topics
-  app.get("/api/user-topics", async (req, res, next) => {
+  app.get("/api/user-topics", requireAuth, async (req, res, next) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
       const userId = req.user!.id;
       const topics = await storage.getUserTopics(userId);
       
