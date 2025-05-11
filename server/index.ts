@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedTopics, seedNewsArticles } from "./seed";
+import { HttpError, ValidationError, normalizeError } from './errors';
 import * as dotenv from "dotenv";
 
 // Load environment variables from .env file
@@ -54,12 +55,51 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  // Error handling middleware
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+    // Normalize error to our custom error types
+    const normalizedError = normalizeError(err);
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Log error details
+    console.error(`[ERROR] ${req.method} ${req.path}`, {
+      error: normalizedError.message,
+      stack: normalizedError.stack,
+      status: (normalizedError as HttpError).status || 500,
+      name: normalizedError.name
+    });
+    
+    // Standard error response format
+    const errorResponse: {
+      message: string;
+      errors?: Record<string, string[]>;
+      stack?: string;
+      code?: string;
+    } = {
+      message: normalizedError.message || "Internal Server Error"
+    };
+    
+    // Include validation errors if available
+    if (normalizedError instanceof ValidationError) {
+      errorResponse.errors = normalizedError.errors;
+    }
+    
+    // Add error code if available
+    if ('code' in normalizedError && typeof normalizedError.code === 'string') {
+      errorResponse.code = normalizedError.code;
+    }
+    
+    // Only include stack trace in development
+    if (!isProduction) {
+      errorResponse.stack = normalizedError.stack;
+    }
+    
+    // Set status code
+    const status = (normalizedError as HttpError).status || err.statusCode || 500;
 
-    res.status(status).json({ message });
-    throw err;
+    // Send response
+    res.status(status).json(errorResponse);
   });
 
   // importantly only setup vite in development and after
