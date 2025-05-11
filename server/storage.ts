@@ -25,9 +25,9 @@ export interface IStorage {
   createTopic(topic: InsertTopic): Promise<Topic>;
   
   // User-Topic methods
-  getUserTopics(userId: number): Promise<Topic[]>;
+  getUserTopics(userId: number | string): Promise<Topic[]>;
   addUserTopic(userTopic: InsertUserTopic): Promise<UserTopic>;
-  removeUserTopic(userId: number, topicId: number): Promise<void>;
+  removeUserTopic(userId: number | string, topicId: number): Promise<void>;
   
   // News Article methods
   getNewsArticles(options: { 
@@ -49,12 +49,12 @@ export interface IStorage {
   createTimelineEvent(event: InsertTimelineEvent): Promise<TimelineEvent>;
   
   // Alert Settings methods
-  getAlertSettings(userId: number): Promise<AlertSetting[]>;
+  getAlertSettings(userId: number | string): Promise<AlertSetting[]>;
   updateAlertSettings(id: number, settings: Partial<InsertAlertSetting>): Promise<AlertSetting | undefined>;
   
   // Deep Research methods
   createResearchRequest(request: InsertResearchRequest): Promise<ResearchRequest>;
-  getResearchRequests(userId: number): Promise<ResearchRequest[]>;
+  getResearchRequests(userId: number | string): Promise<ResearchRequest[]>;
   getResearchRequestById(id: number): Promise<ResearchRequest | undefined>;
   updateResearchRequest(id: number, request: Partial<ResearchRequest>): Promise<ResearchRequest | undefined>;
   
@@ -203,9 +203,12 @@ export class MemStorage implements IStorage {
   }
   
   // User-Topic methods
-  async getUserTopics(userId: number): Promise<Topic[]> {
+  async getUserTopics(userId: number | string): Promise<Topic[]> {
+    // Convert string ID to number if needed
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    
     const userTopicEntries = Array.from(this.userTopics.values()).filter(
-      (userTopic) => userTopic.userId === userId
+      (userTopic) => userTopic.userId === numericUserId
     );
     
     return userTopicEntries.map(userTopic => 
@@ -220,9 +223,12 @@ export class MemStorage implements IStorage {
     return userTopic;
   }
   
-  async removeUserTopic(userId: number, topicId: number): Promise<void> {
+  async removeUserTopic(userId: number | string, topicId: number): Promise<void> {
+    // Convert string ID to number if needed
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    
     const userTopicEntry = Array.from(this.userTopics.entries()).find(
-      ([_, userTopic]) => userTopic.userId === userId && userTopic.topicId === topicId
+      ([_, userTopic]) => userTopic.userId === numericUserId && userTopic.topicId === topicId
     );
     
     if (userTopicEntry) {
@@ -322,9 +328,12 @@ export class MemStorage implements IStorage {
   }
   
   // Alert Settings methods
-  async getAlertSettings(userId: number): Promise<AlertSetting[]> {
+  async getAlertSettings(userId: number | string): Promise<AlertSetting[]> {
+    // Convert string ID to number if needed
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    
     return Array.from(this.alertSettings.values()).filter(
-      (setting) => setting.userId === userId
+      (setting) => setting.userId === numericUserId
     );
   }
   
@@ -349,9 +358,12 @@ export class MemStorage implements IStorage {
     return researchRequest;
   }
 
-  async getResearchRequests(userId: number): Promise<ResearchRequest[]> {
+  async getResearchRequests(userId: number | string): Promise<ResearchRequest[]> {
+    // Convert string ID to number if needed
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    
     return Array.from(this.researchRequests.values())
-      .filter(request => request.userId === userId)
+      .filter(request => request.userId === numericUserId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 

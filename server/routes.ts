@@ -207,7 +207,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all research requests for the authenticated user
   app.get("/api/research-requests", isAuthenticated, async (req, res) => {
     try {
-      const requests = await storage.getResearchRequests(req.user!.id);
+      // Get the numeric user ID from claims.sub or convert string ID to number
+      const userId = parseInt((req.user as any).id || (req.user as any).claims?.sub || "0", 10);
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const requests = await storage.getResearchRequests(userId);
       res.json(requests);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch research requests" });
@@ -224,8 +230,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Research request not found" });
       }
       
+      // Get the numeric user ID from claims.sub or convert string ID to number
+      const userId = parseInt((req.user as any).id || (req.user as any).claims?.sub || "0", 10);
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
       // Check if user owns this request
-      if (request.userId !== req.user!.id) {
+      if (request.userId !== userId) {
         return res.status(403).json({ message: "Not authorized to view this research request" });
       }
       
@@ -272,8 +284,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Research request not found" });
       }
       
+      // Get the numeric user ID from claims.sub or convert string ID to number
+      const userId = parseInt((req.user as any).id || (req.user as any).claims?.sub || "0", 10);
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
       // Check if user owns this request
-      if (request.userId !== req.user!.id) {
+      if (request.userId !== userId) {
         return res.status(403).json({ message: "Not authorized to start this research" });
       }
       
