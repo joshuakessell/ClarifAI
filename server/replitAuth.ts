@@ -1,5 +1,5 @@
-import * as client from "openid-client";
-import { Strategy, type VerifyFunction } from "openid-client/passport";
+import { Issuer, Client, TokenSet } from "openid-client";
+import { Strategy as OpenIDStrategy, type VerifyCallback } from "passport-openid-connect";
 
 import passport from "passport";
 import session from "express-session";
@@ -13,12 +13,26 @@ if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
+if (!process.env.REPL_ID) {
+  throw new Error("Environment variable REPL_ID not provided");
+}
+
+console.log("Replit environment variables:");
+console.log(`- REPLIT_DOMAINS: ${process.env.REPLIT_DOMAINS}`);
+console.log(`- REPL_ID: ${process.env.REPL_ID}`);
+
 const getOidcConfig = memoizee(
   async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
+    const issuerUrl = "https://replit.com/oidc";
+    console.log(`Discovering OIDC config from ${issuerUrl} with client ID ${process.env.REPL_ID}`);
+    try {
+      const issuer = await client.Issuer.discover(issuerUrl);
+      console.log("Discovered issuer:", issuer.metadata.issuer);
+      return issuer;
+    } catch (error) {
+      console.error("Error discovering OIDC config:", error);
+      throw error;
+    }
   },
   { maxAge: 3600 * 1000 }
 );
@@ -98,16 +112,41 @@ export async function setupAuth(app: Express) {
   };
 
   for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
-    const strategy = new Strategy(
-      {
-        name: `replitauth:${domain}`,
-        config,
-        scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
-      },
-      verify,
-    );
-    passport.use(strategy);
+    console.log(`Setting up OpenID Connect strategy for domain: ${domain}`);
+    try {
+      const issuer = await getOidcConfig();
+      
+      // Create a client
+      const client_id = process.env.REPL_ID!;
+      const redirect_uri = `https://${domain}/api/callback`;
+      console.log(`Creating client with ID ${client_id} and redirect URI ${redirect_uri}`);
+      
+      const oidcClient = new issuer.Client({
+        client_id: client_id,
+        redirect_uris: [redirect_uri],
+        response_types: ['code'],
+      });
+      
+      // Create the strategy
+      const strategy = new Strategy(
+        {
+          name: `replitauth:${domain}`,
+          issuer: issuer.metadata.issuer,
+          client_id: client_id,
+          client: oidcClient,
+          usePKCE: true,
+          params: {
+            scope: 'openid email profile offline_access',
+          },
+        },
+        verify
+      );
+      
+      passport.use(`replitauth:${domain}`, strategy);
+      console.log(`Successfully registered OpenID Connect strategy for ${domain}`);
+    } catch (error) {
+      console.error(`Failed to create strategy for domain ${domain}:`, error);
+    }
   }
 
   passport.serializeUser((user: Express.User, cb) => {
