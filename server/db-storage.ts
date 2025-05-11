@@ -1,9 +1,6 @@
-import { db } from './db';
-import connectPg from "connect-pg-simple";
-import session from "express-session";
-import { eq, and, desc, sql, like, asc, count } from 'drizzle-orm';
+import { IStorage } from './storage';
 import {
-  users, User, InsertUser,
+  users, User, UpsertUser,
   topics, Topic, InsertTopic,
   userTopics, UserTopic, InsertUserTopic,
   newsArticles, NewsArticle, InsertNewsArticle,
@@ -14,33 +11,26 @@ import {
   researchFollowupQuestions, ResearchFollowupQuestion, InsertResearchFollowupQuestion,
   researchResults, ResearchResult, InsertResearchResult
 } from "@shared/schema";
-
-import { IStorage } from './storage';
-import { Pool } from '@neondatabase/serverless';
-
-const PostgresSessionStore = connectPg(session);
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+import { db } from "./db";
+import { eq, desc, asc, and, sql, count, SQL } from "drizzle-orm";
+import * as session from 'express-session';
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: any;
+  sessionStore: session.Store;
 
   constructor() {
-    // Initialize session store with PostgreSQL
-    this.sessionStore = new PostgresSessionStore({
-      pool, 
-      tableName: 'sessions',
+    const PostgresStore = connectPg(session);
+    this.sessionStore = new PostgresStore({ 
+      pool,
       createTableIfMissing: true
     });
   }
 
   // User methods
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
 
@@ -49,14 +39,32 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(user: InsertUser): Promise<User> {
-    const [createdUser] = await db.insert(users).values(user).returning();
-    return createdUser;
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    // For PostgreSQL, use on conflict for upsert
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        updatedAt: new Date()
+      })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          profileImageUrl: userData.profileImageUrl,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+    
+    return user;
   }
 
   // Topic methods
   async getAllTopics(): Promise<Topic[]> {
-    return db.select().from(topics);
+    return await db.select().from(topics);
   }
 
   async getTopicById(id: number): Promise<Topic | undefined> {
@@ -70,40 +78,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTopic(topic: InsertTopic): Promise<Topic> {
-    const [createdTopic] = await db.insert(topics).values(topic).returning();
-    return createdTopic;
+    const [newTopic] = await db.insert(topics).values(topic).returning();
+    return newTopic;
   }
 
   // User-Topic methods
   async getUserTopics(userId: number): Promise<Topic[]> {
-    const result = await db
+    const userTopicsWithTopics = await db
       .select({
-        id: topics.id,
-        name: topics.name,
-        slug: topics.slug,
-        description: topics.description
+        topic: topics
       })
       .from(userTopics)
       .innerJoin(topics, eq(userTopics.topicId, topics.id))
       .where(eq(userTopics.userId, userId));
-    
-    return result;
+
+    return userTopicsWithTopics.map(row => row.topic);
   }
 
   async addUserTopic(userTopic: InsertUserTopic): Promise<UserTopic> {
-    const [createdUserTopic] = await db.insert(userTopics).values(userTopic).returning();
-    return createdUserTopic;
+    const [newUserTopic] = await db.insert(userTopics).values(userTopic).returning();
+    return newUserTopic;
   }
 
   async removeUserTopic(userId: number, topicId: number): Promise<void> {
     await db
       .delete(userTopics)
-      .where(
-        and(
-          eq(userTopics.userId, userId),
-          eq(userTopics.topicId, topicId)
-        )
-      );
+      .where(and(eq(userTopics.userId, userId), eq(userTopics.topicId, topicId)));
   }
 
   // News Article methods
@@ -113,40 +113,48 @@ export class DatabaseStorage implements IStorage {
     limit: number; 
     sort: string;
   }): Promise<{ articles: NewsArticle[]; total: number }> {
-    const { topicSlug, page, limit, sort } = options;
+    const { topicSlug, page = 1, limit = 10, sort = "recent" } = options;
     const offset = (page - 1) * limit;
+
+    // Base query conditions
+    let conditions: SQL<unknown> | undefined;
     
-    let query = db.select().from(newsArticles);
-    
-    // Filter by topic if provided
     if (topicSlug) {
       const topic = await this.getTopicBySlug(topicSlug);
       if (topic) {
-        query = query.where(eq(newsArticles.topicId, topic.id));
+        conditions = eq(newsArticles.topicId, topic.id);
       }
     }
-    
-    // Apply sorting
-    if (sort === 'recent') {
-      query = query.orderBy(desc(newsArticles.publishedAt));
+
+    // Sort direction
+    let orderBy;
+    if (sort === "recent") {
+      orderBy = desc(newsArticles.publishedAt);
+    } else if (sort === "oldest") {
+      orderBy = asc(newsArticles.publishedAt);
     } else {
-      // Default to recent if relevance sorting is not applicable or available
-      query = query.orderBy(desc(newsArticles.publishedAt));
+      orderBy = desc(newsArticles.publishedAt); // Default sort
     }
-    
-    // Apply pagination
-    query = query.limit(limit).offset(offset);
-    
-    // Get articles
-    const articles = await query;
-    
-    // Count total matching articles for pagination
-    const [{ value: total }] = await db
-      .select({ value: count() })
+
+    // Get total count
+    const [totalResult] = await db
+      .select({ count: count() })
       .from(newsArticles)
-      .where(topicSlug ? eq(newsArticles.topicId, (await this.getTopicBySlug(topicSlug))?.id || 0) : undefined);
+      .where(conditions);
     
-    return { articles, total: Number(total) };
+    // Get paginated articles
+    const articles = await db
+      .select()
+      .from(newsArticles)
+      .where(conditions)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      articles,
+      total: Number(totalResult.count)
+    };
   }
 
   async getNewsArticleById(id: number): Promise<NewsArticle | undefined> {
@@ -155,8 +163,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNewsArticle(article: InsertNewsArticle): Promise<NewsArticle> {
-    const [createdArticle] = await db.insert(newsArticles).values(article).returning();
-    return createdArticle;
+    const [newArticle] = await db.insert(newsArticles).values(article).returning();
+    return newArticle;
   }
 
   async updateNewsArticle(id: number, articleUpdate: Partial<InsertNewsArticle>): Promise<NewsArticle | undefined> {
@@ -180,13 +188,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNewsAnalysis(analysis: InsertNewsAnalysis): Promise<NewsAnalysis> {
-    const [createdAnalysis] = await db.insert(newsAnalysis).values(analysis).returning();
-    return createdAnalysis;
+    const [newAnalysis] = await db.insert(newsAnalysis).values(analysis).returning();
+    return newAnalysis;
   }
 
   // Timeline Event methods
   async getTimelineEventsByTopicId(topicId: number): Promise<TimelineEvent[]> {
-    return db
+    return await db
       .select()
       .from(timelineEvents)
       .where(eq(timelineEvents.topicId, topicId))
@@ -194,13 +202,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTimelineEvent(event: InsertTimelineEvent): Promise<TimelineEvent> {
-    const [createdEvent] = await db.insert(timelineEvents).values(event).returning();
-    return createdEvent;
+    const [newEvent] = await db.insert(timelineEvents).values(event).returning();
+    return newEvent;
   }
 
   // Alert Settings methods
   async getAlertSettings(userId: number): Promise<AlertSetting[]> {
-    return db
+    return await db
       .select()
       .from(alertSettings)
       .where(eq(alertSettings.userId, userId));
@@ -218,12 +226,16 @@ export class DatabaseStorage implements IStorage {
 
   // Deep Research methods
   async createResearchRequest(request: InsertResearchRequest): Promise<ResearchRequest> {
-    const [createdRequest] = await db.insert(researchRequests).values(request).returning();
-    return createdRequest;
+    const [newRequest] = await db.insert(researchRequests).values({
+      ...request,
+      createdAt: new Date()
+    }).returning();
+    
+    return newRequest;
   }
 
   async getResearchRequests(userId: number): Promise<ResearchRequest[]> {
-    return db
+    return await db
       .select()
       .from(researchRequests)
       .where(eq(researchRequests.userId, userId))
@@ -251,11 +263,10 @@ export class DatabaseStorage implements IStorage {
 
   // Research Followup Question methods
   async getResearchFollowupQuestions(requestId: number): Promise<ResearchFollowupQuestion[]> {
-    return db
+    return await db
       .select()
       .from(researchFollowupQuestions)
-      .where(eq(researchFollowupQuestions.requestId, requestId))
-      .orderBy(asc(researchFollowupQuestions.id));
+      .where(eq(researchFollowupQuestions.requestId, requestId));
   }
 
   async updateResearchFollowupQuestion(id: number, answer: string): Promise<ResearchFollowupQuestion | undefined> {
@@ -279,7 +290,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createResearchResult(result: InsertResearchResult): Promise<ResearchResult> {
-    const [createdResult] = await db.insert(researchResults).values(result).returning();
-    return createdResult;
+    const [newResult] = await db.insert(researchResults).values({
+      ...result,
+      createdAt: new Date()
+    }).returning();
+    
+    return newResult;
   }
 }
