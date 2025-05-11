@@ -12,16 +12,26 @@ interface NewsApiResponse {
   articles: any[];
 }
 
+interface NewsDataResponse {
+  status: string;
+  totalResults: number;
+  results: any[];
+}
+
 export class NewsService {
   private newsApiKey: string;
   private mediaStackApiKey: string;
+  private newsDataApiKey: string;
 
   constructor() {
     this.newsApiKey = process.env.NEWS_API_KEY || '';
     this.mediaStackApiKey = process.env.MEDIA_STACK_API_KEY || '';
+    this.newsDataApiKey = process.env.NEWS_DATA_API_KEY || '';
     
-    if (!this.newsApiKey && !this.mediaStackApiKey) {
+    if (!this.newsApiKey && !this.mediaStackApiKey && !this.newsDataApiKey) {
       console.warn("No news API keys provided. Using mock data only.");
+    } else if (this.newsDataApiKey) {
+      console.log("Using NewsData.io API for news content");
     }
   }
 
@@ -82,9 +92,39 @@ export class NewsService {
   }
 
   async fetchNewsForTopic(topic: string): Promise<any[]> {
-    // For demo purposes, we'll return mock data
-    // In a real implementation, this would call the NewsAPI or MediaStack API
+    // Try NewsData.io API first
+    if (this.newsDataApiKey) {
+      try {
+        const response = await axios.get<NewsDataResponse>(
+          `https://newsdata.io/api/1/news?apikey=${this.newsDataApiKey}&q=${encodeURIComponent(topic)}&language=en&size=10`
+        );
+        
+        if (response.data.status === 'success') {
+          console.log(`Found ${response.data.results.length} articles for topic "${topic}" from NewsData.io`);
+          
+          return response.data.results.map(article => ({
+            title: article.title,
+            summary: article.description || article.title,
+            content: article.content || article.description || article.title,
+            url: article.link,
+            imageUrl: article.image_url,
+            source: article.source_id,
+            sourceUrl: new URL(article.link).origin,
+            publishedAt: new Date(article.pubDate).toISOString(),
+            bias: null, // Will be analyzed later
+            metaData: { 
+              category: article.category,
+              country: article.country,
+              creator: article.creator
+            }
+          }));
+        }
+      } catch (error) {
+        console.error("Error calling NewsData.io API:", error);
+      }
+    }
     
+    // Try NewsAPI if available and NewsData.io failed
     if (this.newsApiKey) {
       try {
         const response = await axios.get<NewsApiResponse>(
@@ -111,6 +151,7 @@ export class NewsService {
     }
     
     // Fallback to mock data
+    console.log(`Using mock data for topic "${topic}"`);
     return this.getMockNewsForTopic(topic);
   }
 
