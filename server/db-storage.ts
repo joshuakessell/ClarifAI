@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { IStorage } from './storage';
 import {
   users, User, InsertUser,
@@ -45,9 +46,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(userData: InsertUser): Promise<User> {
+    // Generate a unique ID for the user
+    const userId = crypto.randomUUID();
+    
     const [user] = await db
       .insert(users)
       .values({
+        id: userId,
         ...userData,
         createdAt: new Date(),
         updatedAt: new Date()
