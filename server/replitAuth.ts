@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoizee from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
+import { User } from "@shared/schema";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -56,8 +57,8 @@ function updateUserSession(
 
 async function upsertUser(
   claims: any,
-) {
-  await storage.upsertUser({
+): Promise<User> {
+  return await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"] || null,
     firstName: claims["first_name"] || null,
@@ -78,14 +79,25 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      const user: any = {};
+      const claims = tokens.claims();
+      updateUserSession(user, tokens);
+      
+      // Store the actual user in the database
+      const dbUser = await upsertUser(claims);
+      
+      // Add db user ID to the session user
+      user.id = dbUser.id;
+      
+      verified(null, user);
+    } catch (error) {
+      console.error("Error in verify function:", error);
+      verified(error as Error);
+    }
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -98,8 +110,13 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: Express.User, cb) => {
+    cb(null, user);
+  });
+  
+  passport.deserializeUser((user: any, cb) => {
+    cb(null, user);
+  });
 
   app.get("/api/login", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
