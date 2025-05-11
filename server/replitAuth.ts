@@ -35,12 +35,13 @@ export function getSession() {
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved for PKCE
+    saveUninitialized: true, // Changed to true to save new sessions (needed for PKCE)
     cookie: {
       httpOnly: true,
       secure: true,
       maxAge: sessionTtl,
+      sameSite: 'lax' // Added to help with callback redirects
     },
   });
 }
@@ -103,9 +104,9 @@ export async function setupAuth(app: Express) {
         const strategy = new openidClient.Strategy(
           {
             client,
-            usePKCE: false,
+            usePKCE: true, // Enable PKCE for secure code exchange
             params: {
-              scope: "openid email profile"
+              scope: "openid email profile offline_access"
             },
           },
           async (tokenSet, done) => {
