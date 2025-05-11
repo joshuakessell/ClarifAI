@@ -1,6 +1,13 @@
 import { createContext, ReactNode, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+// Define a SessionUser type based on what we return from the auth API
+interface SessionUser {
+  id: string;
+  email: string | null;
+  name?: string;
+  profileImage?: string | null;
+  isLoggedIn: boolean;
+}
 import { getQueryFn, queryClient } from "./queryClient";
 import { useToast } from "@/hooks/use-toast";
 
