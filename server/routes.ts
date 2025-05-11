@@ -1,16 +1,24 @@
-import type { Express, Request } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { newsService } from "./services/news-service";
 import { aiService } from "./services/ai-service";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth } from "./auth";
 import { deepResearchService } from "./services/deep-research-service";
 
+// Authentication middleware to protect routes
+function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up Replit authentication
+  // Set up local username/password authentication
   await setupAuth(app);
   
-  // Auth user route is now handled directly in replitAuth.ts
+  // Auth routes are handled in auth.ts
 
   // API Routes
   
