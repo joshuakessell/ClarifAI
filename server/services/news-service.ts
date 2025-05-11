@@ -26,12 +26,19 @@ export class NewsService {
   constructor() {
     this.newsApiKey = process.env.NEWS_API_KEY || '';
     this.mediaStackApiKey = process.env.MEDIA_STACK_API_KEY || '';
-    this.newsDataApiKey = process.env.NEWS_DATA_API_KEY || '';
     
-    if (!this.newsApiKey && !this.mediaStackApiKey && !this.newsDataApiKey) {
-      console.warn("No news API keys provided. Using mock data only.");
-    } else if (this.newsDataApiKey) {
+    // Directly set the NewsData.io API key
+    this.newsDataApiKey = 'pub_86224aa220895ee061c92964311316bdef75f';
+    
+    console.log("Environment variables loaded:");
+    console.log("- NEWS_DATA_API_KEY:", this.newsDataApiKey ? "Found" : "Not found");
+    console.log("- NEWS_API_KEY:", this.newsApiKey ? "Found" : "Not found");
+    console.log("- MEDIA_STACK_API_KEY:", this.mediaStackApiKey ? "Found" : "Not found");
+    
+    if (this.newsDataApiKey) {
       console.log("Using NewsData.io API for news content");
+    } else if (!this.newsApiKey && !this.mediaStackApiKey) {
+      console.warn("No news API keys provided. Using mock data only.");
     }
   }
 
