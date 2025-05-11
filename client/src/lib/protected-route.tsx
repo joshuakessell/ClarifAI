@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { PageTransition } from "@/components/PageTransition";
 
 export function ProtectedRoute({
   path,
@@ -29,5 +30,11 @@ export function ProtectedRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return (
+    <Route path={path}>
+      <PageTransition>
+        <Component />
+      </PageTransition>
+    </Route>
+  );
 }

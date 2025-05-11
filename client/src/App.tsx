@@ -11,6 +11,8 @@ import ResearchDashboard from "@/pages/research-dashboard";
 import ResearchDetails from "@/pages/research-details";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/lib/protected-route";
+import { AnimatedRoutes } from "@/components/AnimatedRoutes";
+import { AnimatedRoute } from "@/components/AnimatedRoute";
 
 // Import all static pages
 import HowItWorks from "@/pages/static/HowItWorks";
@@ -36,28 +38,28 @@ function Router() {
       <ProtectedRoute path="/timeline/:id" component={Timeline} />
       <ProtectedRoute path="/research" component={ResearchDashboard} />
       <ProtectedRoute path="/research/:id" component={ResearchDetails} />
-      <Route path="/auth" component={AuthPage} />
+      <AnimatedRoute path="/auth" component={AuthPage} />
       
       {/* Platform pages */}
-      <Route path="/how-it-works" component={HowItWorks} />
-      <Route path="/methodology" component={Methodology} />
-      <Route path="/source-verification" component={SourceVerification} />
-      <Route path="/bias-detection" component={BiasDetection} />
+      <AnimatedRoute path="/how-it-works" component={HowItWorks} />
+      <AnimatedRoute path="/methodology" component={Methodology} />
+      <AnimatedRoute path="/source-verification" component={SourceVerification} />
+      <AnimatedRoute path="/bias-detection" component={BiasDetection} />
       
       {/* Company pages */}
-      <Route path="/about-us" component={AboutUs} />
-      <Route path="/team" component={Team} />
-      <Route path="/press" component={Press} />
-      <Route path="/contact" component={Contact} />
+      <AnimatedRoute path="/about-us" component={AboutUs} />
+      <AnimatedRoute path="/team" component={Team} />
+      <AnimatedRoute path="/press" component={Press} />
+      <AnimatedRoute path="/contact" component={Contact} />
       
       {/* Legal pages */}
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/terms-of-service" component={TermsOfService} />
-      <Route path="/cookie-policy" component={CookiePolicy} />
-      <Route path="/gdpr-compliance" component={GDPRCompliance} />
+      <AnimatedRoute path="/privacy-policy" component={PrivacyPolicy} />
+      <AnimatedRoute path="/terms-of-service" component={TermsOfService} />
+      <AnimatedRoute path="/cookie-policy" component={CookiePolicy} />
+      <AnimatedRoute path="/gdpr-compliance" component={GDPRCompliance} />
       
       {/* 404 not found route - must be last */}
-      <Route component={NotFound} />
+      <AnimatedRoute path="/:rest*" component={NotFound} />
     </Switch>
   );
 }
@@ -67,7 +69,9 @@ function App() {
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AnimatedRoutes>
+          <Router />
+        </AnimatedRoutes>
       </TooltipProvider>
     </AuthProvider>
   );
