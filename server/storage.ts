@@ -1,5 +1,5 @@
 import {
-  users, User, InsertUser,
+  users, User, UpsertUser,
   topics, Topic, InsertTopic,
   userTopics, UserTopic, InsertUserTopic,
   newsArticles, NewsArticle, InsertNewsArticle,
@@ -8,15 +8,15 @@ import {
   alertSettings, AlertSetting, InsertAlertSetting,
   researchRequests, ResearchRequest, InsertResearchRequest,
   researchFollowupQuestions, ResearchFollowupQuestion, InsertResearchFollowupQuestion,
-  researchResults, ResearchResult, InsertResearchResult
+  researchResults, ResearchResult, InsertResearchResult,
+  sessions
 } from "@shared/schema";
 
 export interface IStorage {
   // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  upsertUser(userData: UpsertUser): Promise<User>;
   
   // Topic methods
   getAllTopics(): Promise<Topic[]>;
