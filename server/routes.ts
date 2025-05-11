@@ -145,11 +145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(200).json({ message: "Email already subscribed" });
       }
       
-      const newUser = await storage.createUser({
-        email,
-        username: email.split('@')[0],
-        password: Math.random().toString(36).slice(2) // Generate random password
-      });
+      // Since we're using Replit Auth, we won't create users directly anymore
+      // We'll just record the email for newsletter purposes
+      // This could be expanded to a separate newsletter table in the future
       
       res.status(201).json({ message: "Subscribed successfully" });
     } catch (error) {
@@ -168,9 +166,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "URL is required" });
       }
 
+      // Get the numeric user ID from claims.sub or convert string ID to number
+      const userId = parseInt((req.user as any).id || (req.user as any).claims?.sub || "0", 10);
+      if (!userId) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
       // Create research request with authenticated user ID
       const request = await storage.createResearchRequest({
-        userId: req.user!.id,
+        userId,
         url,
         title: title || null,
         status: "pending"
