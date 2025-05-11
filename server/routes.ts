@@ -3,12 +3,24 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { newsService } from "./services/news-service";
 import { aiService } from "./services/ai-service";
-import { setupAuth } from "./auth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { deepResearchService } from "./services/deep-research-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up authentication
-  setupAuth(app);
+  // Set up Replit authentication
+  await setupAuth(app);
+  
+  // Auth user route
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 
   // API Routes
   
@@ -146,13 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Deep Research routes
-  // Authentication middleware for deep research routes
-  const isAuthenticated = (req: Request, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    next();
-  };
+  // We're using the isAuthenticated function from replitAuth.ts now
 
   // Create a new research request
   app.post("/api/research-requests", isAuthenticated, async (req, res) => {

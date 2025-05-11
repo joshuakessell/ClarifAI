@@ -68,16 +68,16 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
+  private users: Map<string, User>;
   private topics: Map<number, Topic>;
   private userTopics: Map<number, UserTopic>;
   private newsArticles: Map<number, NewsArticle>;
   private newsAnalysis: Map<number, NewsAnalysis>;
   private timelineEvents: Map<number, TimelineEvent>;
   private alertSettings: Map<number, AlertSetting>;
+  sessionStore: any;
   
   private currentIds: {
-    users: number;
     topics: number;
     userTopics: number;
     newsArticles: number;
@@ -105,8 +105,13 @@ export class MemStorage implements IStorage {
     this.researchFollowupQuestions = new Map();
     this.researchResults = new Map();
     
+    // Set up session store for Replit Auth
+    const MemoryStore = require('memorystore')(require('express-session'));
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    });
+    
     this.currentIds = {
-      users: 1,
       topics: 1,
       userTopics: 1,
       newsArticles: 1,
@@ -138,14 +143,8 @@ export class MemStorage implements IStorage {
   }
 
   // User methods
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
   }
   
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -154,11 +153,31 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentIds.users++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const { id } = userData;
+    
+    // Check if user already exists
+    const existingUser = await this.getUser(id);
+    
+    if (existingUser) {
+      // Update existing user
+      const updatedUser: User = {
+        ...existingUser,
+        ...userData,
+        updatedAt: new Date()
+      };
+      this.users.set(id, updatedUser);
+      return updatedUser;
+    } else {
+      // Create new user
+      const newUser: User = {
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.users.set(id, newUser);
+      return newUser;
+    }
   }
   
   // Topic methods
