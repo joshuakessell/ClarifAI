@@ -12,8 +12,10 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
+  const { login } = useAuth();
+  
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    login();
   };
 
   if (isLoading) {
