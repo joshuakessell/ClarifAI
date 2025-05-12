@@ -21,8 +21,25 @@ export function NewsCard({ article }: NewsCardProps) {
     }
   };
   
-  const topicName = article.topicId ? 'General' : 'General';
-  const topicSlug = article.topicId ? 'general' : 'general';
+  // Determine topic name and slug based on topicId
+  let topicName = 'General';
+  let topicSlug = 'general';
+  
+  // Map of topic IDs to names and slugs
+  const topicMap: Record<number, {name: string, slug: string}> = {
+    1: { name: 'Politics', slug: 'politics' },
+    2: { name: 'Technology', slug: 'technology' },
+    3: { name: 'Business', slug: 'business' },
+    4: { name: 'Health', slug: 'health' },
+    5: { name: 'Science', slug: 'science' },
+    6: { name: 'Climate', slug: 'climate' },
+    7: { name: 'Entertainment', slug: 'entertainment' }
+  };
+  
+  if (article.topicId && topicMap[article.topicId]) {
+    topicName = topicMap[article.topicId].name;
+    topicSlug = topicMap[article.topicId].slug;
+  }
   
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
