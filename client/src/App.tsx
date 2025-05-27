@@ -32,10 +32,10 @@ function Router() {
   return (
     <Switch>
       {/* Main application routes */}
-      <ProtectedRoute path="/" component={Home} />
-      <ProtectedRoute path="/topic/:slug" component={Topic} />
-      <ProtectedRoute path="/conflict-view/:id" component={ConflictView} />
-      <ProtectedRoute path="/timeline/:id" component={Timeline} />
+      <AnimatedRoute path="/" component={Home} />
+      <AnimatedRoute path="/topic/:slug" component={Topic} />
+      <AnimatedRoute path="/conflict-view/:id" component={ConflictView} />
+      <AnimatedRoute path="/timeline/:id" component={Timeline} />
       <ProtectedRoute path="/research" component={ResearchDashboard} />
       <ProtectedRoute path="/research/:id" component={ResearchDetails} />
       <AnimatedRoute path="/auth" component={AuthPage} />

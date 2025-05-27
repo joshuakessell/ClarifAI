@@ -2,7 +2,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -200,6 +200,28 @@ export default function AuthPage() {
             </Form>
           </TabsContent>
         </Tabs>
+
+        {/* Guest Access Option */}
+        <div className="mt-8 text-center">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">Or</span>
+            </div>
+          </div>
+          <div className="mt-6">
+            <Link href="/">
+              <Button variant="outline" className="w-full">
+                Continue as Guest
+              </Button>
+            </Link>
+            <p className="mt-2 text-xs text-gray-500">
+              Explore our platform without creating an account. You can register later to save your preferences.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Right side - Hero */}
