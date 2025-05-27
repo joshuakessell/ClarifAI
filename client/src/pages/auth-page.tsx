@@ -77,7 +77,7 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Form */}
-      <div className="flex flex-col justify-center w-full max-w-md px-8 py-12">
+      <div className="flex flex-col justify-center w-full lg:w-1/2 max-w-md lg:max-w-none px-8 py-12 lg:px-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome to Neutral News</h1>
           <p className="text-muted-foreground">
@@ -203,7 +203,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Hero */}
-      <div className="hidden lg:block w-full bg-muted">
+      <div className="hidden lg:flex lg:w-1/2 bg-muted">
         <div className="flex flex-col justify-center h-full p-12">
           <div className="max-w-lg">
             <h2 className="text-2xl font-bold mb-4">Unbiased News Analysis</h2>
