@@ -33,7 +33,7 @@ export default function Home() {
   
   return (
     <>
-      <Head title="FactFocus - Unbiased News Platform" description="Get factually verified, bias-neutral news updates from multiple sources, all in one place." />
+      <Head title="Clarif-AI - AI-Powered Unbiased News Analysis" description="Get factually verified, bias-neutral news updates with AI-powered analysis from multiple perspectives, all in one place." />
       
       <div className="min-h-screen flex flex-col">
         <Header />

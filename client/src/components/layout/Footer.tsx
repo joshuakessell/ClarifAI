@@ -7,10 +7,14 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center">
-              <i className="fas fa-newspaper text-primary text-2xl mr-2"></i>
-              <span className="text-xl font-bold text-neutral-dark">FactFocus</span>
+              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mr-2">
+                <span className="text-white font-bold text-sm">AI</span>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Clarif-AI
+              </span>
             </div>
-            <p className="text-gray-500 mt-2">Delivering factually verified, bias-neutral news updates on topics that matter to you.</p>
+            <p className="text-gray-500 mt-2">AI-powered news analysis delivering factually verified, bias-neutral updates on topics that matter to you.</p>
           </div>
           
           <div>
@@ -59,7 +63,7 @@ export function Footer() {
               <i className="fab fa-linkedin"></i>
             </a>
           </div>
-          <p className="text-gray-500 text-sm mt-4 md:mt-0">© {new Date().getFullYear()} FactFocus. All rights reserved.</p>
+          <p className="text-gray-500 text-sm mt-4 md:mt-0">© {new Date().getFullYear()} Clarif-AI. All rights reserved.</p>
         </div>
       </div>
     </footer>

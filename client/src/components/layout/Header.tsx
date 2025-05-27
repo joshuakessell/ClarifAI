@@ -38,8 +38,12 @@ export function Header() {
         <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
           <div className="flex justify-start lg:w-0 lg:flex-1">
             <Link href="/" className="flex items-center">
-              <i className="fas fa-newspaper text-primary text-2xl mr-2"></i>
-              <span className="text-xl font-bold text-neutral-dark">FactFocus</span>
+              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mr-2">
+                <span className="text-white font-bold text-sm">AI</span>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Clarif-AI
+              </span>
             </Link>
           </div>
           

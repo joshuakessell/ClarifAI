@@ -79,9 +79,16 @@ export default function AuthPage() {
       {/* Left side - Form */}
       <div className="flex flex-col justify-center w-full lg:w-1/2 max-w-md lg:max-w-none px-8 py-12 lg:px-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome to Neutral News</h1>
-          <p className="text-muted-foreground">
-            Get factually verified, bias-neutral news updates on the topics you care about.
+          <div className="flex items-center mb-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mr-3">
+              <span className="text-white font-bold text-lg">AI</span>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Clarif-AI
+            </h1>
+          </div>
+          <p className="text-gray-600">
+            Get factually verified, bias-neutral news updates on the topics you care about with AI-powered analysis.
           </p>
         </div>
 
