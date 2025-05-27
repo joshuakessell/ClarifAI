@@ -203,36 +203,34 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Hero */}
-      <div className="hidden lg:flex lg:w-1/2 bg-muted">
-        <div className="flex flex-col justify-center h-full p-12">
-          <div className="max-w-lg">
-            <h2 className="text-2xl font-bold mb-4">Unbiased News Analysis</h2>
-            <p className="text-muted-foreground mb-6">
-              Our platform uses advanced AI to detect bias and provide factual,
-              neutral perspectives on current events.
-            </p>
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-100 items-center justify-center">
+        <div className="p-12 max-w-lg">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900">Unbiased News Analysis</h2>
+          <p className="text-gray-600 mb-6">
+            Our platform uses advanced AI to detect bias and provide factual,
+            neutral perspectives on current events.
+          </p>
 
-            <div className="space-y-4">
-              <div className="p-4 bg-background rounded-lg shadow">
-                <h3 className="font-semibold mb-2">Multi-Perspective Analysis</h3>
-                <p className="text-sm text-muted-foreground">
-                  See news events from left, center, and right viewpoints to get a complete picture.
-                </p>
-              </div>
-              
-              <div className="p-4 bg-background rounded-lg shadow">
-                <h3 className="font-semibold mb-2">Factual Verification</h3>
-                <p className="text-sm text-muted-foreground">
-                  AI-powered fact checking ensures information accuracy before delivery.
-                </p>
-              </div>
-              
-              <div className="p-4 bg-background rounded-lg shadow">
-                <h3 className="font-semibold mb-2">Deep Research Feature</h3>
-                <p className="text-sm text-muted-foreground">
-                  Submit any article or post for in-depth analysis and get comprehensive insights.
-                </p>
-              </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-white rounded-lg shadow">
+              <h3 className="font-semibold mb-2 text-gray-900">Multi-Perspective Analysis</h3>
+              <p className="text-sm text-gray-600">
+                See news events from left, center, and right viewpoints to get a complete picture.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-white rounded-lg shadow">
+              <h3 className="font-semibold mb-2 text-gray-900">Factual Verification</h3>
+              <p className="text-sm text-gray-600">
+                AI-powered fact checking ensures information accuracy before delivery.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-white rounded-lg shadow">
+              <h3 className="font-semibold mb-2 text-gray-900">Deep Research Feature</h3>
+              <p className="text-sm text-gray-600">
+                Submit any article or post for in-depth analysis and get comprehensive insights.
+              </p>
             </div>
           </div>
         </div>
